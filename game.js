@@ -112,16 +112,17 @@ $('#mic').onclick=()=>{
   if(recognition){stopListening();setTurn('child');return;}
   const R=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!R){$('#mic').classList.add('unavailable');showSupport('麦克风识别在此浏览器不可用，请家长帮忙换浏览器。');return;}
-  stopPrompt();const r=new R(),current=turnId,g=generation;recognition=r;
+  stopPrompt();const r=new R(),current=turnId,g=generation;recognition=r;let gotResult=false;
   r.lang='en-US';r.interimResults=false;r.maxAlternatives=1;
   r.onstart=()=>{if(recognition!==r)return;$('#mic').classList.add('listening');setTurn('listening');$('#caption').textContent="I'm listening…";$('#mode').textContent='小熊在听 · 再点麦克风可停止';};
-  r.onend=()=>{if(recognition!==r)return;clearTimeout(recognitionTimer);recognitionTimer=null;recognition=null;$('#mic').classList.remove('listening');if(!busy&&!modelling)setTurn('child');};
+  r.onend=()=>{if(recognition!==r)return;clearTimeout(recognitionTimer);recognitionTimer=null;recognition=null;$('#mic').classList.remove('listening');if(!busy&&!modelling)setTurn('child');if(current===turnId&&!busy&&!gotResult)showSupport('小熊还在等你说。再点麦克风试一次。');};
   recognitionTimer=setTimeout(()=>{if(recognition===r){r.abort();showSupport('小熊还在等你说。再点麦克风试一次。');}},8000);
   r.onerror=()=>{if(current===turnId&&recognition===r)showSupport('没听清也没关系，我们再说一个词。');};
   r.onnomatch=()=>{if(current===turnId)showSupport('没听清也没关系，我们再说一个词。');};
   r.onresult=async e=>{
     if(current!==turnId||g!==generation||busy)return;
     clearTimeout(recognitionTimer);recognitionTimer=null;
+    gotResult=true;
     const text=e.results?.[0]?.[0]?.transcript||'';if(!text.trim()){showSupport('没听清也没关系，我们再说一个词。');return;}
     const kind=modelled?'echo':'picture';busy=true;setTurn('checking');controls();$('#caption').textContent=text;
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),4500);

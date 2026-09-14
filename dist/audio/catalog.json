@@ -1,0 +1,128 @@
+{
+  "I'm hungry. Let's take an apple.": {
+    "url": "/audio/5064159c5dfd9dcb.mp3",
+    "duration": 2.45,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "I'm hungry. Let's take an apple."
+  },
+  "Let's put the blanket on the grass.": {
+    "url": "/audio/1cb52f5e2b9c3dd4.mp3",
+    "duration": 2.35,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Let's put the blanket on the grass."
+  },
+  "Oh! It's raining. We need an umbrella.": {
+    "url": "/audio/4ea9c66a35294bc6.mp3",
+    "duration": 3.55,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Oh! It's raining. We need an umbrella."
+  },
+  "First, the apple. Then, the blanket. Last, the umbrella.": {
+    "url": "/audio/3d34066b1fdb59c2.mp3",
+    "duration": 4.7,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "First, the apple. Then, the blanket. Last, the umbrella."
+  },
+  "Apple.": {
+    "url": "/audio/da43ecd7455ab1d6.mp3",
+    "duration": 0.9,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Apple."
+  },
+  "Blanket.": {
+    "url": "/audio/00d18ead0a23a494.mp3",
+    "duration": 1.35,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Blanket."
+  },
+  "Umbrella.": {
+    "url": "/audio/254e66440ebc27d3.mp3",
+    "duration": 1.05,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Umbrella."
+  },
+  "A ball.": {
+    "url": "/audio/dcf37176ac8f4256.mp3",
+    "duration": 0.95,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "A ball."
+  },
+  "A boot.": {
+    "url": "/audio/06def8fa591b0d02.mp3",
+    "duration": 1.0,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "A boot."
+  },
+  "Yum! The apple is in the basket.": {
+    "url": "/audio/4029cdbcdee4c67a.mp3",
+    "duration": 3.15,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Yum! The apple is in the basket."
+  },
+  "A soft blanket!": {
+    "url": "/audio/a176bf335dd09b7a.mp3",
+    "duration": 2.2,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "A soft blanket!"
+  },
+  "Now we are dry. Thank you!": {
+    "url": "/audio/b38441f04e5e7e03.mp3",
+    "duration": 2.2,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Now we are dry. Thank you!"
+  },
+  "We did it! Our lovely picnic.": {
+    "url": "/audio/f4aaed50aae693d0.mp3",
+    "duration": 3.0,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "We did it! Our lovely picnic."
+  },
+  "Then, the blanket.": {
+    "url": "/audio/d18a64801c9aa7cf.mp3",
+    "duration": 1.75,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Then, the blanket."
+  },
+  "Last, the umbrella.": {
+    "url": "/audio/549a88910896d2ed.mp3",
+    "duration": 2.0,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Last, the umbrella."
+  },
+  "Watch me. You can use the pictures.": {
+    "url": "/audio/bd73f305b8dd719b.mp3",
+    "duration": 3.3,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Watch me. You can use the pictures."
+  },
+  "Let’s use the pictures. Or try speaking again.": {
+    "url": "/audio/11a5129fab75ec72.mp3",
+    "duration": 3.85,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Let’s use the pictures. Or try speaking again."
+  },
+  "Let’s use the pictures.": {
+    "url": "/audio/a009def73b57b4ac.mp3",
+    "duration": 1.95,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Let’s use the pictures."
+  }
+}

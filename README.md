@@ -29,3 +29,9 @@ The child selects then places an object (or drags it): apple into basket, blanke
 Speech currently uses the browser's SpeechRecognition service, sending its transcript to `/api/turn`. Clear item names use local rules; other utterances can use OpenRouter with a 1.8-second timeout. This is **not a direct audio-model integration**. Missing microphone support, recognition errors, and API failures retain the picture interaction path. No transcript is written to disk; the bounded in-memory cache expires after five minutes.
 
 Browser QA scripts in `tests/browser-*.js` are functions for `patchwright-cli run-code`. Start a separate named browser, open the local server, and start the picnic before running `browser-flow.js`; run mobile QA at 390×844. Voice QA injects **simulated** recognition results and does not verify a real microphone or OpenRouter model quality. Close the isolated browser after testing.
+
+## Narration audio
+
+Fixed narration uses `openai/gpt-audio-mini` through OpenRouter, voice `nova`. The 18 MP3 clips in `audio/` are generated once, transcript-checked, measured with ffprobe and shipped with the app. Runtime playback does not require a TTS request or browser speech synthesis. The shared audio player is started by the play button; failed playback highlights the replay button. Scene transitions wait for narration to end. `scripts/generate-audio.py` regenerates clips using `OPENROUTER_API_KEY` and ffmpeg; credentials are never stored in the repository.
+
+`tests/browser-audio.js` validates all 18 clips with real browser decoding, checks non-silent PCM samples, observes media playback progress, and verifies feedback finishes before changing stages. This verifies the media pipeline, not the physical speaker volume of the user device.

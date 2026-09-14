@@ -39,5 +39,5 @@
 <p id="caption" class="caption" aria-live="polite">和小熊一起，带上野餐的好心情。</p>
 <footer><span>慢慢来，小熊会等你。</span><span id="mode">看一看 · 动一动 · 说一说</span></footer>
 </section>
-<dialog id="parent-dialog"><button id="close-parent" class="close" aria-label="关闭家长说明">×</button><span class="eyebrow">FOR GROWN-UPS</span><h2>让英语带来一个小变化。</h2><p>孩子帮小熊装苹果、铺毯子、撑雨伞，最后按图片回顾事情的顺序。点击物品，再点击虚线位置；也可以直接拖过去，或说出英语。</p><p>小熊头上的图片给出目标，手形按钮播放动作示范，喇叭重播英语。操作成功后，物品真的出现在场景里。</p><p>语音使用浏览器识别服务，识别出的文字发送到本应用及配置的 OpenRouter 模型。此版本没有音频直传模型；麦克风需主动点击授权。不能或不想使用语音时，完整游戏仍可通过图片操作完成。</p><p id="report"></p><p>互动完成不代表口语掌握。此版本不评分，也不保存儿童录音。</p></dialog>
-</main><script src="/game.js"></script></body></html>
+<dialog id="parent-dialog"><button id="close-parent" class="close" aria-label="关闭家长说明">×</button><span class="eyebrow">FOR GROWN-UPS</span><h2>让英语带来一个小变化。</h2><p>孩子帮小熊装苹果、铺毯子、撑雨伞，最后按图片回顾事情的顺序。点击物品，再点击虚线位置；也可以直接拖过去，或说出英语。</p><p>小熊头上的图片给出目标，手形按钮播放动作示范，喇叭重播英语。操作成功后，物品真的出现在场景里。</p><p>语音使用浏览器识别服务，识别出的文字发送到本应用及配置的 OpenRouter 模型。引导语使用 OpenRouter 的 openai/gpt-audio-mini（nova 音色）预生成音频，不依赖浏览器朗读。录音尚未直传模型；麦克风需主动点击授权。不能或不想使用语音时，完整游戏仍可通过图片操作完成。</p><p id="report"></p><p>互动完成不代表口语掌握。此版本不评分，也不保存儿童录音。</p></dialog>
+</main><audio id="narration" preload="auto" aria-label="小熊引导语音"></audio><script src="/audio/catalog.js"></script><script src="/speech.js"></script><script src="/game.js"></script></body></html>

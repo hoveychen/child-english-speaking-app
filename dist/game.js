@@ -10,7 +10,7 @@ const levels = [
 const words={apple:'Apple.',blanket:'Blanket.',umbrella:'Umbrella.',ball:'A ball.',boot:'A boot.'};
 let phase=-1, recall=0, selected=null, busy=false, modelling=false, modelled=false;
 let turnId=0, generation=0, recognition=null, hintTimer=null, promptId=0;
-let attempts=[];
+let attempts=[], recognitionTimer=null;
 const scene=$('#scene'), choices=$('#choices'), destination=$('#destination');
 const active=()=>phase>=0&&phase<4;
 const expectedItem=()=>phase===3?['apple','blanket','umbrella'][recall]:levels[phase]?.id;
@@ -21,7 +21,7 @@ function controls(){
   $('#replay').disabled=$('#help').disabled=!active()||busy;
   $('#assist').disabled=!active()||busy;
 }
-function stopListening(){const old=recognition;recognition=null;if(old)old.abort();$('#mic').classList.remove('listening');}
+function stopListening(){clearTimeout(recognitionTimer);recognitionTimer=null;const old=recognition;recognition=null;if(old)old.abort();$('#mic').classList.remove('listening');}
 function stopPrompt(){promptId++;modelling=false;window.picnicSpeech.stop();}
 function report(){
   const echo=attempts.filter(a=>a.kind==='echo').length;
@@ -40,7 +40,7 @@ function render(){
   destination.firstElementChild.innerHTML=`<use href="#${levels[phase].target}"/>`;
   destination.setAttribute('aria-label','听小熊示范，开口后物品才会移动');
   for(const id of levels[phase].choices){
-    const b=document.createElement('button');b.className='choice';b.dataset.item=id;b.setAttribute('aria-label',id);b.innerHTML=icon(id);
+    const b=document.createElement('button');b.className='choice';b.dataset.item=id;b.setAttribute('aria-label',id);b.innerHTML=icon(id);if(id===expectedItem()&&phase<3)b.classList.add('target-choice');
     if(phase===3&&['apple','blanket','umbrella'].indexOf(id)<recall){b.disabled=true;b.classList.add('recalled');}
     b.onclick=()=>select(id,b);
     let origin=null;
@@ -60,7 +60,7 @@ async function showModel(){
   if(current!==turnId||request!==promptId)return;
   await say('Your turn!');
   if(current!==turnId||request!==promptId)return;
-  modelling=false;setTurn('child');controls();$('#caption').textContent='Your turn!';$('#mode').textContent='轮到你啦 · 说一个词就可以';demo();
+  modelling=false;setTurn('child');controls();$('#caption').textContent='Your turn!';$('#mode').textContent='轮到你啦 · 说一个词就可以';
 }
 function select(id,b){
   if(!active()||busy||recognition)return;
@@ -70,7 +70,7 @@ function select(id,b){
 }
 function demo(){
   if(!active()||busy||recognition)return;
-  const b=choices.querySelector(`[data-item="${expectedItem()}"]`);if(!b)return;
+  const b=choices.querySelector(`[data-item="${expectedItem()}"]`);if(!b)return;if(scene.dataset.turn==='child')return;
   const a=b.getBoundingClientRect(),z=$('#mic').getBoundingClientRect(),hand=$('#demo-hand');
   hand.getAnimations().forEach(animation=>animation.cancel());hand.style.left=(a.left+a.width/2)+'px';hand.style.top=(a.top+a.height/2)+'px';
   hand.animate([{opacity:0,transform:'translate(0,0)'},{opacity:1,transform:'translate(0,0)',offset:.2},{opacity:1,transform:`translate(${z.left-a.left}px,${z.top-a.top}px)`,offset:.8},{opacity:0,transform:`translate(${z.left-a.left}px,${z.top-a.top}px)`}],{duration:1800,iterations:2});
@@ -83,7 +83,7 @@ async function fly(id,b){
 async function advance(id,kind,text=''){
   if(!active()||busy||id!==expectedItem()||!['echo','picture','assisted'].includes(kind))return;
   busy=true;stopPrompt();stopListening();clearTimeout(hintTimer);setTurn('reward');controls();const g=generation;
-  attempts.push({item:id,kind,text:text.slice(0,120)});destination.classList.remove('waiting-for-voice');
+  attempts.push({item:id,kind,text:text.slice(0,120)});destination.classList.remove('waiting-for-voice');scene.classList.add('heard');setTimeout(()=>scene.classList.remove('heard'),700);
   const b=choices.querySelector(`[data-item="${id}"]`);if(b)await fly(id,b);if(g!==generation)return;
   $('.friend').classList.remove('happy');void $('.friend').offsetWidth;$('.friend').classList.add('happy');
   if(phase===0)$('#packed').innerHTML=icon('apple');
@@ -97,7 +97,7 @@ async function advance(id,kind,text=''){
   render();
 }
 function showSupport(message){
-  busy=false;stopListening();stopPrompt();setTurn('child');controls();$('#caption').textContent=message;$('#mode').textContent='点喇叭再听一个词 · 或请家长帮忙';demo();
+  busy=false;stopListening();stopPrompt();setTurn('child');controls();$('#caption').textContent=message;$('#mode').textContent='小熊会再示范 · 轮到你时说一个词';setTimeout(()=>{if(active()&&!busy)showModel();},120);
 }
 $('#start').onclick=()=>{phase=0;$('#intro').hidden=true;$('#intro').style.display='none';render();};
 destination.onclick=()=>{if(active()&&!busy)showModel();};
@@ -115,11 +115,13 @@ $('#mic').onclick=()=>{
   stopPrompt();const r=new R(),current=turnId,g=generation;recognition=r;
   r.lang='en-US';r.interimResults=false;r.maxAlternatives=1;
   r.onstart=()=>{if(recognition!==r)return;$('#mic').classList.add('listening');setTurn('listening');$('#caption').textContent="I'm listening…";$('#mode').textContent='小熊在听 · 再点麦克风可停止';};
-  r.onend=()=>{if(recognition!==r)return;recognition=null;$('#mic').classList.remove('listening');if(!busy&&!modelling)setTurn('child');};
+  r.onend=()=>{if(recognition!==r)return;clearTimeout(recognitionTimer);recognitionTimer=null;recognition=null;$('#mic').classList.remove('listening');if(!busy&&!modelling)setTurn('child');};
+  recognitionTimer=setTimeout(()=>{if(recognition===r){r.abort();showSupport('小熊还在等你说。再点麦克风试一次。');}},8000);
   r.onerror=()=>{if(current===turnId&&recognition===r)showSupport('没听清也没关系，我们再说一个词。');};
   r.onnomatch=()=>{if(current===turnId)showSupport('没听清也没关系，我们再说一个词。');};
   r.onresult=async e=>{
     if(current!==turnId||g!==generation||busy)return;
+    clearTimeout(recognitionTimer);recognitionTimer=null;
     const text=e.results?.[0]?.[0]?.transcript||'';if(!text.trim()){showSupport('没听清也没关系，我们再说一个词。');return;}
     const kind=modelled?'echo':'picture';busy=true;setTurn('checking');controls();$('#caption').textContent=text;
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),4500);

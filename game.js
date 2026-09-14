@@ -46,14 +46,14 @@ destination.onclick=()=>{if(selected)accept(selected,choices.querySelector(`[dat
 $('#replay').onclick=$('#thought').onclick=()=>{if(phase>=0&&phase<4&&!busy){say(levels[phase].say);demo();}};
 $('#help').onclick=()=>{demo();if(phase>=0&&phase<4)say(levels[phase].say);};
 $('#restart').onclick=()=>{generation++;stopListening();clearTimeout(hintTimer);phase=0;recall=0;voiceCount=0;busy=false;$('#packed').innerHTML='';$('#celebration').hidden=true;$('#thought').hidden=false;destination.classList.remove('hidden');scene.classList.remove('blanket-out','umbrella-out','raining');$('#mode').textContent='看一看 · 动一动 · 说一说';render();};
-$('#mic').onclick=()=>{if(busy||phase<0||phase>3)return;if(recognition){stopListening();return;}const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R){$('#mic').classList.add('unavailable');say('Watch me. You can use the pictures.');$('#mode').textContent='本浏览器没有语音识别 · 可用图片完成';demo();return;}speechSynthesis?.cancel();const r=new R();recognition=r;const g=generation,p=phase;r.lang='en-US';r.interimResults=false;r.maxAlternatives=1;
+$('#mic').onclick=()=>{if(busy||phase<0||phase>3)return;if(recognition){stopListening();return;}const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R){$('#mic').classList.add('unavailable');say('Watch me. You can use the pictures.');$('#mode').textContent='本浏览器没有语音识别 · 可用图片完成';demo();return;}if('speechSynthesis' in window)speechSynthesis.cancel();const r=new R();recognition=r;const g=generation,p=phase;r.lang='en-US';r.interimResults=false;r.maxAlternatives=1;
   r.onstart=()=>{$('#mic').classList.add('listening');$('#caption').textContent="I'm listening…";};
   r.onend=()=>{if(recognition===r)recognition=null;$('#mic').classList.remove('listening');};
   r.onerror=()=>{say('Let’s use the pictures. Or try speaking again.');$('#mode').textContent='语音未完成 · 可重试或使用图片';demo();};
   r.onresult=async e=>{if(g!==generation||p!==phase||busy)return;busy=true;controls();const text=e.results[0][0].transcript;$('#caption').textContent=text;const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),4500);
     try{const res=await fetch('/api/turn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,stage:levels[phase].id,expected:phase===3?['apple','blanket','umbrella'][recall]:levels[phase].id}),signal:controller.signal});if(!res.ok)throw Error('turn');const out=await res.json();if(g!==generation||p!==phase)return;busy=false;if(out.accepted&&['apple','blanket','umbrella'].includes(out.item)){await accept(out.item,choices.querySelector(`[data-item="${out.item}"]`),true);}else{say(levels[phase].say);demo();}}
     catch{if(g===generation&&p===phase){busy=false;say('Let’s use the pictures.');$('#mode').textContent='连接未完成 · 可用图片继续';demo();}}
-    finally{clearTimeout(timer);if(g===generation){busy=false;controls();}}
+    finally{clearTimeout(timer);if(g===generation){controls();}}
   };try{r.start();}catch{recognition=null;say('Let’s use the pictures.');demo();}};
 $('#parent').onclick=()=>{$('#report').textContent=`本次获得认可的语音回答：${voiceCount} 次。${phase===4?'图片故事已完成。':'故事尚未完成。'}`;$('#parent-dialog').showModal();};$('#close-parent').onclick=()=>$('#parent-dialog').close();
 render();

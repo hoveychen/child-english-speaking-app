@@ -1,0 +1,1 @@
+{"scripts":{"start":"node server.js","build":"mkdir -p dist && cp index.html dist/index.html"},"dependencies":{"express":"^4.21.2"}}

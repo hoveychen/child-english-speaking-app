@@ -1,0 +1,4 @@
+const express=require('express'); const path=require('path'); const app=express(); app.use(express.json({limit:'2mb'}));
+app.get('/healthz',(req,res)=>res.json({ok:true,service:'child-english-mvp'}));
+app.post('/api/turn',(req,res)=>{const text=(req.body.text||'').toLowerCase(); let intent='unknown',next_action='support'; if(/umbrella|雨伞/.test(text)){intent='take_item';next_action='advance'} else if(/because|rain|下雨/.test(text)){intent='explain_reason';next_action='advance'} else if(/apple|banana|cup|blanket|苹果|香蕉/.test(text)){intent='take_item';next_action='follow_up'} res.json({intent,confidence_band:intent==='unknown'?'uncertain':'partial',reply_script:intent==='unknown'?'Let me show you.':'Great idea! Let’s pack it.',next_action,support_level:intent==='unknown'?1:0,safety_flag:'none'});});
+app.use(express.static(path.join(__dirname))); app.listen(process.env.PORT||3000,'0.0.0.0');

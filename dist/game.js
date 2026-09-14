@@ -58,6 +58,8 @@ async function showModel(){
   stopListening();const current=turnId,request=++promptId;modelled=true;modelling=true;setTurn('bear');controls();
   await say(words[expectedItem()]);
   if(current!==turnId||request!==promptId)return;
+  await say('Your turn!');
+  if(current!==turnId||request!==promptId)return;
   modelling=false;setTurn('child');controls();$('#caption').textContent='Your turn!';$('#mode').textContent='轮到你啦 · 说一个词就可以';demo();
 }
 function select(id,b){

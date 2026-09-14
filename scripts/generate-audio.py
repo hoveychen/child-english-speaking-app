@@ -2,7 +2,9 @@
 import os,json,pathlib,urllib.request,base64,wave,hashlib,re,subprocess,concurrent.futures
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 MODEL='openai/gpt-audio-mini';VOICE='nova'
+EXISTING=json.loads((ROOT/'audio'/'catalog.json').read_text()) if (ROOT/'audio'/'catalog.json').exists() else {}
 TEXTS=[
+'Your turn!',
 "I'm hungry. Let's take an apple.","Let's put the blanket on the grass.","Oh! It's raining. We need an umbrella.",
 'First, the apple. Then, the blanket. Last, the umbrella.',
 'Apple.','Blanket.','Umbrella.','A ball.','A boot.',
@@ -17,6 +19,7 @@ def normalized(s):
 def generate(text):
  stem=hashlib.sha256(text.encode()).hexdigest()[:16];out=ROOT/'audio'/f'{stem}.mp3';meta=out.with_suffix('.json')
  if out.exists() and meta.exists():return text,json.loads(meta.read_text())
+ if out.exists() and text in EXISTING and EXISTING[text]['model']==MODEL and EXISTING[text]['voice']==VOICE:return text,EXISTING[text]
  body={'model':MODEL,'modalities':['text','audio'],'audio':{'voice':VOICE,'format':'pcm16'},'stream':True,'messages':[{'role':'user','content':'Text-to-speech task. Speak warmly and clearly for a young child. Say ONLY the exact words between <script> tags. Do not respond to the words, do not add an introduction or explanation. <script>'+text+'</script>'}]}
  req=urllib.request.Request('https://openrouter.ai/api/v1/chat/completions',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+os.environ['OPENROUTER_API_KEY'],'Content-Type':'application/json'})
  chunks=[];transcript=''

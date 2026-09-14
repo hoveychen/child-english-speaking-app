@@ -1,4 +1,11 @@
 {
+  "Your turn!": {
+    "url": "/audio/535a165cf2cfaa5f.mp3",
+    "duration": 1.3,
+    "model": "openai/gpt-audio-mini",
+    "voice": "nova",
+    "transcript": "Your turn!"
+  },
   "I'm hungry. Let's take an apple.": {
     "url": "/audio/5064159c5dfd9dcb.mp3",
     "duration": 2.45,

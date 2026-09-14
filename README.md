@@ -1,37 +1,27 @@
-# Child English Speaking MVP
+# Little Picnic
 
-小熊英语小屋：面向 5–8 岁儿童的故事化英语口语练习。当前 MVP 是“准备野餐”场景，支持点击物品、浏览器语音输入、语音回应与 OpenRouter 兼容的 `/api/turn` 接口。
+A picture-led English speaking game for young children. https://child-english.muveeai.com
 
-## Run
+## Play loop
 
-```bash
-npm install
-npm start
-```
+The first three encounters model one word: apple, blanket, umbrella. When the model finishes, a visible microphone cue hands the turn to the child. An accepted spoken word moves the object and changes the story. Tapping or dragging only selects an object or requests a model; **ordinary clicks cannot advance a speaking turn**.
 
-Open `http://localhost:3000`. The server listens on `PORT` (default `3000`) and exposes `GET /healthz`.
+The final revisit supplies the same pictures without automatically saying their names. Children can try retrieving the word, or request the model again. The session report separately counts echo turns (a model was requested), picture responses (no model in this turn), and parent-assisted turns. It does not claim mastery, pronunciation accuracy or spontaneous speech. A parent can explicitly assist from the parent dialog when the child needs a break or recognition is unavailable; this is never counted as child speech.
 
-## Container
+## Run and verify
 
-```bash
-docker build -t child-english .
-docker run --rm -p 3000:3000 child-english
-```
+`npm ci`, `npm start`, then http://localhost:3000. `npm test` checks stage-aware decisions, cache isolation, negation, request validation, and private-file routing. `npm run build` exports assets into `dist/`.
 
-Every push to `main` builds and publishes `ghcr.io/<owner>/<repo>:latest` through GitHub Actions. The image does not bake in API keys; configure future OpenRouter secrets as runtime environment variables.
+`tests/browser-*.js` are functions for `patchwright-cli run-code`. Open a fresh isolated browser at the app URL before running each script. `browser-flow.js` uses simulated recognition callbacks with the real UI, audio and API; it checks click/silence/wrong-speech rejection, speech-driven story changes and separate reporting. `browser-mobile.js` verifies drag rejection and unsupported recognition at 390×844. Audio tests use real decoding and media playback. Close each isolated browser after testing.
 
-## Visual picnic redesign
+## Audio
 
-Run `npm ci`, `npm start`, then open http://localhost:3000. `npm test` checks stage-aware speech decisions, cache isolation, negation, request validation, and private-file routing. `npm run build` exports the three browser assets to `dist/`.
+TTS uses OpenRouter `openai/gpt-audio-mini`, voice `nova`. The 19 MP3 clips in `audio/` are generated once, transcript-checked, measured with ffprobe and shipped with the app. Runtime playback does not need a TTS request or browser speech synthesis. The shared audio player starts from a user gesture, exposes playback failures, and waits for feedback to finish before advancing.
 
-The child selects then places an object (or drags it): apple into basket, blanket onto grass, umbrella over the bear. The final activity recalls the three pictures in order. Speaker and hand buttons replay voice and visual demonstrations. All activities work without speech recognition; picture-only completion is never counted as speaking practice.
+`scripts/generate-audio.py` generates missing clips using `OPENROUTER_API_KEY` and ffmpeg. Existing clips are reused. Credentials are never stored in the repository.
 
-Speech currently uses the browser's SpeechRecognition service, sending its transcript to `/api/turn`. Clear item names use local rules; other utterances can use OpenRouter with a 1.8-second timeout. This is **not a direct audio-model integration**. Missing microphone support, recognition errors, and API failures retain the picture interaction path. No transcript is written to disk; the bounded in-memory cache expires after five minutes.
+Speech input still uses browser SpeechRecognition, sending its transcript to `/api/turn`; it is not direct audio-model input. Clear item names use local rules; other utterances can use OpenRouter with a 1.8-second timeout. Recognition failures do not advance the story. No transcript is written to disk; server caching is bounded and expires after five minutes. Browser automation simulates recognition and does not establish recognition accuracy for a child's voice.
 
-Browser QA scripts in `tests/browser-*.js` are functions for `patchwright-cli run-code`. Start a separate named browser, open the local server, and start the picnic before running `browser-flow.js`; run mobile QA at 390×844. Voice QA injects **simulated** recognition results and does not verify a real microphone or OpenRouter model quality. Close the isolated browser after testing.
+## Deployment
 
-## Narration audio
-
-Fixed narration uses `openai/gpt-audio-mini` through OpenRouter, voice `nova`. The 18 MP3 clips in `audio/` are generated once, transcript-checked, measured with ffprobe and shipped with the app. Runtime playback does not require a TTS request or browser speech synthesis. The shared audio player is started by the play button; failed playback highlights the replay button. Scene transitions wait for narration to end. `scripts/generate-audio.py` regenerates clips using `OPENROUTER_API_KEY` and ffmpeg; credentials are never stored in the repository.
-
-`tests/browser-audio.js` validates all 18 clips with real browser decoding, checks non-silent PCM samples, observes media playback progress, and verifies feedback finishes before changing stages. This verifies the media pipeline, not the physical speaker volume of the user device.
+GitHub Actions publishes `ghcr.io/hoveychen/child-english-speaking-app:latest` on main pushes. The existing Muvee image project listens on port 3000; `/healthz` is its health endpoint.

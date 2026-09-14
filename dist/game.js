@@ -10,7 +10,7 @@ const levels = [
 const words={apple:'Apple.',blanket:'Blanket.',umbrella:'Umbrella.',ball:'A ball.',boot:'A boot.'};
 let phase=-1, recall=0, selected=null, busy=false, modelling=false, modelled=false;
 let turnId=0, generation=0, recognition=null, hintTimer=null, promptId=0;
-let attempts=[], recognitionTimer=null;
+let attempts=[], recognitionTimer=null, captureState=null, audioFallbackBusy=false;
 const scene=$('#scene'), choices=$('#choices'), destination=$('#destination');
 const active=()=>phase>=0&&phase<4;
 const expectedItem=()=>phase===3?['apple','blanket','umbrella'][recall]:levels[phase]?.id;
@@ -21,7 +21,24 @@ function controls(){
   $('#replay').disabled=$('#help').disabled=!active()||busy;
   $('#assist').disabled=!active()||busy;
 }
-function stopListening(){clearTimeout(recognitionTimer);recognitionTimer=null;const old=recognition;recognition=null;if(old)old.abort();$('#mic').classList.remove('listening');}
+function encodeWav(samples, sampleRate){
+  const buffer=new ArrayBuffer(44+samples.length*2), view=new DataView(buffer);
+  const write=(offset,text)=>{for(let i=0;i<text.length;i++)view.setUint8(offset+i,text.charCodeAt(i));};
+  write(0,'RIFF');view.setUint32(4,36+samples.length*2,true);write(8,'WAVE');write(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*2,true);view.setUint16(32,2,true);view.setUint16(34,16,true);write(36,'data');view.setUint32(40,samples.length*2,true);
+  for(let i=0;i<samples.length;i++){const n=Math.max(-1,Math.min(1,samples[i]));view.setInt16(44+i*2,n<0?n*32768:n*32767,true);}let binary='';const bytes=new Uint8Array(buffer);for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(binary);
+}
+async function beginCapture(){
+  const state={cancel:false,promise:null};captureState=state;
+  state.promise=navigator.mediaDevices?.getUserMedia?navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(stream=>{
+    if(state.cancel){stream.getTracks().forEach(t=>t.stop());return null;}
+    const context=new AudioContext(),source=context.createMediaStreamSource(stream),processor=context.createScriptProcessor(4096,1,1),samples=[];
+    processor.onaudioprocess=e=>{if(!state.cancel)samples.push(new Float32Array(e.inputBuffer.getChannelData(0)));};
+    const sink=context.createGain();sink.gain.value=0;source.connect(processor);processor.connect(sink);sink.connect(context.destination);
+    state.finish=async()=>{state.cancel=true;processor.disconnect();source.disconnect();stream.getTracks().forEach(t=>t.stop());await context.close();const total=samples.reduce((n,a)=>n+a.length,0),joined=new Float32Array(total);let at=0;for(const a of samples){joined.set(a,at);at+=a.length;}return joined.length>1000?encodeWav(joined,context.sampleRate):null;};return state;
+  }).catch(()=>null):Promise.resolve(null);
+}
+async function stopCapture(){const state=captureState;captureState=null;if(!state)return null;state.cancel=true;const session=await state.promise;return session?.finish?session.finish():null;}
+function stopListening(){clearTimeout(recognitionTimer);recognitionTimer=null;const old=recognition;recognition=null;if(old)old.abort();stopCapture();$('#mic').classList.remove('listening');}
 function stopPrompt(){promptId++;modelling=false;window.picnicSpeech.stop();}
 function report(){
   const echo=attempts.filter(a=>a.kind==='echo').length;
@@ -107,18 +124,29 @@ $('#restart').onclick=()=>{
   generation++;stopListening();stopPrompt();clearTimeout(hintTimer);phase=0;recall=0;attempts=[];busy=false;
   $('#packed').innerHTML='';$('#celebration').hidden=true;$('#thought').hidden=false;destination.classList.remove('hidden');scene.classList.remove('blanket-out','umbrella-out','raining');render();
 };
+async function classifyCapturedAudio(audio,current,g){
+  if(!audio||audioFallbackBusy||current!==turnId||g!==generation)return;
+  audioFallbackBusy=true;busy=true;setTurn('checking');controls();$('#mode').textContent='小熊正在听你的录音…';
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+  try{
+    const response=await fetch('/api/turn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audio,stage:levels[phase].id,expected:expectedItem()}),signal:controller.signal});
+    if(!response.ok)throw Error('audio turn');const out=await response.json();if(current!==turnId||g!==generation)return;
+    busy=false;if(out.accepted&&out.item===expectedItem())await advance(out.item,modelled?'echo':'picture','audio');else showSupport('小熊没有听清，再说一个词。');
+  }catch{if(current===turnId&&g===generation)showSupport('录音没有送到小熊，再点麦克风试一次。');}
+  finally{clearTimeout(timer);audioFallbackBusy=false;if(g===generation)controls();}
+}
 $('#mic').onclick=()=>{
   if(!active()||busy||modelling)return;
   if(recognition){stopListening();setTurn('child');return;}
   const R=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!R){$('#mic').classList.add('unavailable');showSupport('麦克风识别在此浏览器不可用，请家长帮忙换浏览器。');return;}
-  stopPrompt();const r=new R(),current=turnId,g=generation;recognition=r;let gotResult=false;
+  stopPrompt();const r=new R(),current=turnId,g=generation;recognition=r;let gotResult=false;beginCapture();
   r.lang='en-US';r.interimResults=false;r.maxAlternatives=1;
   r.onstart=()=>{if(recognition!==r)return;$('#mic').classList.add('listening');setTurn('listening');$('#caption').textContent="I'm listening…";$('#mode').textContent='小熊在听 · 再点麦克风可停止';};
-  r.onend=()=>{if(recognition!==r)return;clearTimeout(recognitionTimer);recognitionTimer=null;recognition=null;$('#mic').classList.remove('listening');if(!busy&&!modelling)setTurn('child');if(current===turnId&&!busy&&!gotResult)showSupport('小熊还在等你说。再点麦克风试一次。');};
-  recognitionTimer=setTimeout(()=>{if(recognition===r){r.abort();showSupport('小熊还在等你说。再点麦克风试一次。');}},8000);
-  r.onerror=()=>{if(current===turnId&&recognition===r)showSupport('没听清也没关系，我们再说一个词。');};
-  r.onnomatch=()=>{if(current===turnId)showSupport('没听清也没关系，我们再说一个词。');};
+  r.onend=async()=>{if(recognition!==r)return;clearTimeout(recognitionTimer);recognitionTimer=null;recognition=null;$('#mic').classList.remove('listening');if(!busy&&!modelling)setTurn('child');if(current===turnId&&!busy&&!gotResult){$('#caption').textContent='小熊正在听你的录音…';$('#mode').textContent='录音正在送给小熊';const audio=await stopCapture();if(audio)await classifyCapturedAudio(audio,current,g);else showSupport('小熊还在等你说。再点麦克风试一次。');}};
+  recognitionTimer=setTimeout(()=>{if(recognition===r){r.__silentTimeout=true;r.abort();}},8000);
+  r.onerror=()=>{if(current===turnId&&recognition===r){r.__speechError=true;$('#caption').textContent='小熊正在检查这次声音…';$('#mode').textContent='录音正在送给小熊';}};
+  r.onnomatch=()=>{if(current===turnId&&recognition===r){r.__speechError=true;$('#caption').textContent='小熊正在检查这次声音…';$('#mode').textContent='录音正在送给小熊';}};
   r.onresult=async e=>{
     if(current!==turnId||g!==generation||busy)return;
     clearTimeout(recognitionTimer);recognitionTimer=null;

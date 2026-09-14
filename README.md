@@ -20,7 +20,7 @@ TTS uses OpenRouter `openai/gpt-audio-mini`, voice `nova`. The 19 MP3 clips in `
 
 `scripts/generate-audio.py` generates missing clips using `OPENROUTER_API_KEY` and ffmpeg. Existing clips are reused. Credentials are never stored in the repository.
 
-Speech input still uses browser SpeechRecognition, sending its transcript to `/api/turn`; it is not direct audio-model input. Clear item names use local rules; other utterances can use OpenRouter with a 1.8-second timeout. Recognition failures do not advance the story. No transcript is written to disk; server caching is bounded and expires after five minutes. Browser automation simulates recognition and does not establish recognition accuracy for a child's voice.
+Speech input first tries browser SpeechRecognition. If it ends without a result, the same microphone turn is captured as bounded WAV and sent to OpenRouter `openai/gpt-audio-mini` for audio classification. The server accepts only a whitelisted item and never advances on silence or unrelated speech. Clear text item names use local rules; other text utterances can use OpenRouter with a 1.8-second timeout. No transcript is written to disk; server caching is bounded and expires after five minutes. Browser automation simulates recognition and does not establish recognition accuracy for a child's voice.
 
 ## Deployment
 

@@ -139,7 +139,12 @@ $('#mic').onclick=()=>{
   if(!active()||busy||modelling)return;
   if(recognition){stopListening();setTurn('child');return;}
   const R=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!R){$('#mic').classList.add('unavailable');showSupport('麦克风识别在此浏览器不可用，请家长帮忙换浏览器。');return;}
+  if(!R){
+    stopPrompt(); const current=turnId,g=generation; $('#mic').classList.add('listening'); setTurn('listening');
+    $('#caption').textContent="I'm listening…"; $('#mode').textContent='正在录音，松开麦克风后识别'; beginCapture();
+    setTimeout(async()=>{ if(current!==turnId||g!==generation||busy)return; $('#mic').classList.remove('listening'); $('#caption').textContent='小熊正在听你的录音…'; const audio=await stopCapture(); if(audio) await classifyCapturedAudio(audio,current,g); else showSupport('没有录到声音，再点麦克风试一次。'); },4500);
+    return;
+  }
   stopPrompt();const r=new R(),current=turnId,g=generation;recognition=r;let gotResult=false;beginCapture();
   r.lang='en-US';r.interimResults=false;r.maxAlternatives=1;
   r.onstart=()=>{if(recognition!==r)return;$('#mic').classList.add('listening');setTurn('listening');$('#caption').textContent="I'm listening…";$('#mode').textContent='小熊在听 · 再点麦克风可停止';};

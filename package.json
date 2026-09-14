@@ -1,1 +1,10 @@
-{"scripts":{"start":"node server.js","build":"mkdir -p dist && cp index.html dist/index.html"},"dependencies":{"express":"^4.21.2"}}
+{
+  "scripts": {
+    "start": "node server.js",
+    "build": "mkdir -p dist && cp index.html style.css game.js dist/",
+    "test": "node --test tests/turn.test.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

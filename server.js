@@ -54,7 +54,8 @@ app.post('/api/turn',async(req,res)=>{
   }).finally(()=>inflight.delete(key));
   inflight.set(key,promise);res.json(await promise);
 });
-for(const file of ['index.html','style.css','game.js']) app.get(file==='index.html'?'/':`/${file}`,(_req,res)=>res.sendFile(path.join(__dirname,file)));
+for(const file of ['index.html','style.css','game.js','speech.js']) app.get(file==='index.html'?'/':`/${file}`,(_req,res)=>res.sendFile(path.join(__dirname,file)));
+app.use('/audio',express.static(path.join(__dirname,'audio'),{maxAge:'7d',immutable:true,setHeaders:(res,file)=>{if(!file.endsWith('.mp3'))res.set('Cache-Control','no-cache');}}));
 app.get('/favicon.ico',(_req,res)=>res.status(204).end());
 app.use((err,_req,res,_next)=>res.status(err.status||500).json({error:'invalid request'}));
 if(require.main===module)app.listen(process.env.PORT||3000,'0.0.0.0');
